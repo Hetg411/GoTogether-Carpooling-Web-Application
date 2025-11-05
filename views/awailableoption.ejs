@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Trips</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-4">
+  <h2 class="mb-4 text-center">Available Trips</h2>
+  <div class="row g-3">
+    <% if (findNearby.length > 0) { %>
+      <% findNearby.forEach(option => { %>
+        <div class="col-md-6">
+          <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body">
+              <h4 class="card-title text-primary"><%= option.username %></h4>
+              <p><strong>From:</strong> <%= option.location_src %></p>
+              <p><strong>To:</strong> <%= option.location_dest %></p>
+              <p><strong>User Type:</strong> <%= option.usertype %></p>
+              <p><strong>Status:</strong> 
+                <span class="<%= option.IsAvailable ? 'text-success' : 'text-danger' %>">
+                  <%= option.IsAvailable ? 'Available' : 'Not Available' %>
+                </span>
+              </p>
+              <button class="btn btn-primary w-100" 
+                      onclick="requestRide('<%= option.username %>')" 
+                      <%= option.IsAvailable ? '' : 'disabled' %>>
+                Request Ride
+              </button>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p class="text-center text-muted">No nearby trips found.</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- Ride Request Modal -->
+<div class="modal fade" id="rideRequestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Ride Request</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="rideRequestMessage"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" id="acceptBtn">✅ Accept</button>
+        <button class="btn btn-danger" id="rejectBtn">❌ Reject</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+  <div id="toastContainer"></div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const socket = io();
+  const loggedInUser = "<%= loggedInUser %>";
+
+  socket.emit("registerUser", loggedInUser);
+
+  // Bootstrap modal instance
+  const rideModal = new bootstrap.Modal(document.getElementById('rideRequestModal'));
+  const rideMessage = document.getElementById("rideRequestMessage");
+  const acceptBtn = document.getElementById("acceptBtn");
+  const rejectBtn = document.getElementById("rejectBtn");
+
+  // Request Ride
+  function requestRide(toUser) {
+    socket.emit("requestRide", { fromUser: loggedInUser, toUser });
+    showToast("Request sent to " + toUser, "info");
+  }
+
+  // Notify User2
+  socket.on("notifyUser", (data) => {
+  console.log("notifyUser received:"+data.fromUser);
+  rideMessage.textContent = `${data.fromUser} wants to ride with you 🚗. Do you accept?`;
+  rideModal.show();
+
+  acceptBtn.onclick = () => {
+    socket.emit("acceptRide", { fromUser: data.fromUser, toUser: loggedInUser });
+    rideModal.hide();
+  };
+
+  rejectBtn.onclick = () => {
+    socket.emit("rejectRide", { fromUser: data.fromUser, toUser: loggedInUser });
+    rideModal.hide();
+  };
+});
+
+
+  // Notify User1 (accepted)
+// Requester → only gets confirmation
+socket.on("rideAccepted", (data) => {
+  alert(data.message);
+});
+
+// Accepter (driver) → gets redirect to liveLocation
+socket.on("redirectToLiveLocation", (data) => {
+  console.log("{{{}}}")
+  console.log("{}"+data.currentUserId);
+   console.log("{}"+data.targetUser);
+    console.log("{}"+data.requesterId);
+window.location.href = `/livelocation/${data.currentUserId}/${data.targetUser}/${data.requesterId}`;
+});
+
+
+
+socket.on("rideRejected", (data) => {
+  showToast(`${data.fromUser} rejected your ride ❌`, "danger");
+
+  // Only redirect if THIS user was rejected
+  // if (data.toUser === currentUserId) {
+  //   setTimeout(() => {
+  //     window.location.href = `/ride/rejected/${currentUserId}`;
+  //   }, 2000);
+  // }
+});
+
+  // Reusable Bootstrap toast
+  function showToast(message, type = "info") {
+    const toastId = "toast" + Date.now();
+    const toastHTML = `
+      <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0 mb-2" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>`;
+    document.getElementById("toastContainer").insertAdjacentHTML("beforeend", toastHTML);
+
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 4000 });
+    toast.show();
+
+    toastElement.addEventListener("hidden.bs.toast", () => toastElement.remove());
+  }
+</script>
+</body>
+</html>

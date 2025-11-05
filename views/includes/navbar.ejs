@@ -1,0 +1,74 @@
+<style>
+  .login {
+    padding: 6px 20px;
+  }
+  .logo-img {
+    height: 50px;
+    width: 50px;
+  }
+
+  /* For very small screens */
+  @media (max-width: 576px) {
+    .logo-img {
+      height: 40px;
+      width: 40px;
+    }
+    .navbar-brand strong {
+      font-size: 16px;
+    }
+    .btn {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    .nav-link {
+      font-size: 14px;
+    }
+  }
+</style>
+
+<body>
+  <nav class="navbar navbar-expand-lg bg-body-tertiary shadow sticky-top">
+    <div class="container-fluid">
+      
+      <!-- Logo + Brand -->
+      <a class="navbar-brand d-flex align-items-center" href="#">
+        <img src="/logo.png" class="logo-img me-2" alt="Logo" />
+        <strong>GoTogether</strong>
+      </a>
+
+      <!-- Mobile toggle button -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+        data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+        aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Collapsible Menu -->
+      <div class="collapse navbar-collapse mt-2" id="navbarSupportedContent">
+        <div class="ms-auto d-flex flex-column flex-lg-row align-items-lg-center">
+
+          <!-- Home -->
+          <a class="nav-link me-lg-3 mb-2 mb-lg-0" href="/">Home</a>
+
+          <!-- Sign Up -->
+          <form method="GET" action="/signup" class="me-lg-2 mb-2 mb-lg-0">
+            <button class="btn btn-outline-primary px-4 w-100">Sign Up</button>
+          </form>
+
+          <!-- Conditional Login / Logout -->
+          <% if (!user) { %>
+            <form action="/login" class="mb-2 mb-lg-0">
+              <button class="btn btn-primary login w-100">Login</button>
+            </form>
+          <% } else { %>
+            <form action="/logout" class="mb-2 mb-lg-0">
+              <button class="btn btn-danger login w-100">Logout</button>
+            </form>
+          <% } %>
+
+        </div>
+      </div>
+    </div>
+    
+  </nav>
+</body>

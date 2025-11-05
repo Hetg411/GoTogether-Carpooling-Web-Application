@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<div id="map" style="height: 400px; width: 100%;"></div>
+
+   <form method="POST" id="locationform" action="set/destinationdetails">
+    <input type="text" name="username">
+     <input type="text" name="location">
+     <input type="text" name="usertype">
+    <input type="hidden" id="latitude" name="latitude">
+    <input type="hidden" id="longitude" name="longitude">
+    <button id="sendBtn" type="submit">Send</button>
+</form>
+
+    <script>
+let map, userMarker;
+
+function initMap() {
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 15,
+    center: { lat: 0, lng: 0 }, // Placeholder
+  });
+
+  if(navigator.geolocation){
+    navigator.geolocation.watchPosition(
+      (position)=>{
+        const userLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        document.getElementById("latitude").value=userLocation.lat;
+        document.getElementById("longitude").value=userLocation.lng;
+        document.getElementById("locationform").submit();
+        console.log(userLocation.lat);
+          console.log(userLocation.lng);
+
+        if (!userMarker) {
+          userMarker = new google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: "You",
+          });
+          map.setCenter(userLocation);
+        } else {
+          userMarker.setPosition(userLocation);
+          map.setCenter(userLocation);
+        }
+      },
+      (error) => {
+        console.error("Error getting live location", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
+      }
+    );
+  } else {
+    alert("Geolocation is not supported by your browser.");
+  }
+}
+
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9Oz1yoUXrCaDOUbxOaILSs1Qey_XrHlc&callback=initMap">
+</script>
+
+    
+</body>
+</html>
